@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <title>Library API</title>
+</head>
+<body>
+    <div class="container">
+        <h1 class="mt-5">Library API Instructions</h1>
+        <p class="mt-4">To use the API, you need to be signed in. If you haven't signed up yet, you can do so <a href="http://localhost:8000/api/v1/signup">here</a>.</p>
+        <p class="mt-4">After signup your personal library db system will be created.</p>
+        <p>This is the base path for the API: <code>http://localhost:8000/api/v1/</code></p>
+        <p>You will use him for the api calls. like this:  <code>http://localhost:8000/api/v1/<strong>customers</strong></code></p>
+        <hr>
+        <h2 class="mt-4">Customer API</h2>
+        <p><strong>GET /customers</strong>: Retrieve all customers or a specific customer by ID.</p>
+        <p>(Opitional Query Parameter: <code>id</code>)</p>
+        <p><strong>POST /customers</strong>: Add a new customer.</p>
+        <p> (Reqiuerd Body Customer data : <code>name= , age= , customer_id=</code>)</p>
+        <p><strong>PUT /customers</strong>: Update the name or the age of a customer.</p>
+        <p> (Reqiuerd Query Parameter: <code>id</code> | Request Body:<code>name= , age= </code>)</p>
+        <p><strong>DELETE /customers</strong>: Delete a customer if he don't have any associated rents.</p>
+        <p> (Reqiuerd Query Parameter: <code>id</code>)</p>
+        
+        <h2 class="mt-4">Book API</h2>
+        <p><strong>GET /books</strong>: Retrieve all books or multiply books by name filtering.</p>
+        <p> (Opitional Query Parameter: <code>name</code>)</p>
+        <p><strong>POST /books</strong>: Add a new book.</p>
+        <p> (Reqiuerd Body Book data : <code>name= , author= , retrun_period=</code>)</p>
+        <p><strong>PUT /books</strong>: Update the return period of a book if he not currently in rent.</p>
+        <p>(Reqiuerd Query Parameter: <code>id</code>| Request Body: <code>retrun_period</code>)</p>
+        <p><strong>DELETE /books</strong>: Delete a book if it doesn't have any associated rents.</p>
+        <p>(Reqiuerd Query Parameter: <code>id</code>)</p>
+        
+        <h2 class="mt-4">Rent API</h2>
+        <p><strong>GET /rents</strong>: Retrieve all rents or rents by customer ID.</p>
+        <p>Add the query parameter <code>lated=true</code> to retrieve only late rents.</p>
+        <p>Add the query parameter <code>id=</code> to retrieve rents of specific customer.</p>
+        <p>(Opitional Query Parameter: <code>id</code>, <code>lated</code>)</p>
+        <p><strong>POST /rents</strong>: Add a new rent if the requested book not rented.</p>
+        <p>(Reqiuerd Body Rent - id's of attirbutes: <code>cust= , book=</code>)</p> 
+        <p><strong>DELETE /rents</strong>: Delete a rent.</p>
+        <p>(Reqiuerd Query Parameter: <code>id</code>)</p>
+        
+        <h2 class="mt-4">User API</h2>
+        <p><strong>POST /signup</strong>: Create a new user. (Request Body: User data)</p>
+        <p><strong>GET /private</strong>: Access a private endpoint. Requires authentication.</p>
+        
+    </div>
+</body>
+</html>
