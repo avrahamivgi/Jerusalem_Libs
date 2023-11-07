@@ -15,7 +15,7 @@ from rest_framework.renderers import JSONRenderer
 from datetime import timedelta , datetime
 
 from core.serialzers import CustomerSerializer , CustomerMiniSerializer , BookSerializer ,BookMiniSerializer, RentSerializer , RentMiniSerializer ,UserSerializer
-from core.models import Customer , Book , Rent
+from core.models import Customer , Book , Rent,Worker
 from core.permissions import IsLibraryWorker
 
 
@@ -37,26 +37,30 @@ def serve_customer(request):
     #diplaying all customers or one customer by id
     if request.method == "GET":
         cust_id = request.query_params.get("id",False) #"False" - if we dont get the query
-    
-        if not cust_id:
-            customers = Customer.objects.all()
+        worker = Worker.objects.get(user = request.user)
+
+        if  not cust_id or cust_id == "null":
+            customers = Customer.objects.filter(lib = worker.lib.id)
             serialzer = CustomerSerializer(instance=customers ,many=True)
-
         else:
-
             #validate that there is customer
             try:
                 customer = Customer.objects.get(customer_id = cust_id)
             except ObjectDoesNotExist:
                 return Response({"info":"no such customer"})
             
-            serialzer = CustomerSerializer(instance=customer)
+            serialzer = CustomerSerializer(instance=customer )
+
+            return Response([serialzer.data])
 
         return Response(serialzer.data)
 
     #adding a new customer ONLY TO THEIR LIB!
     if request.method== "POST":
-        customer = CustomerSerializer(data = request.data)
+        print(f"\n\n\n{request.data}\n\n\n")
+        
+        # import IPython; IPython.embed()
+        customer = CustomerSerializer(data=request.data)
         if customer.is_valid():
             try:
                 # validate that its 9 digit number(this is hard to do in the regular validator)
@@ -64,7 +68,8 @@ def serve_customer(request):
                     raise ValueError("You Need To Provied 9 Digit Number!")
 
                 #validate that the lib of the customer is the lib of the worker:
-                if request.data["lib"] != str(request.user.customer.lib.id):
+                
+                if request.data["lib"] != str(request.user.worker.lib.id):
                     raise ValueError("You not allowed to add customer to another lib..")
                 
                 customer.save()
@@ -73,39 +78,12 @@ def serve_customer(request):
             except ValueError as e:
                 return Response({"error": str(e)}, status=400)
 
-            return Response({"info":"customer created succsesfuly!", "data":request.data},status=200)
+            return Response({"info":"customer created succsesfuly!"},status=200)
 
         else:
-            return Response({"info":"error!","error": customer.errors} ,status=500)
+            return Response({"error": customer.errors} ,status=500)
     
-    #changing the name,age,lib of the customer 
-    if request.method == "PUT":
-        id_ = request.query_params.get("id",False)
 
-        if not id_:
-            return Response({"info":"You must specify the id of the customer"}, status=400)
-        
-        #validating the customer
-        try:
-            customer = Customer.objects.get(customer_id = id_)
-
-            #validate that the lib of the customer is the lib of the worker:
-            if User.objects.get(customer= id_).customer.lib.id != request.user.customer.lib.id:
-                raise ValueError("You are not allowed to edit customer from another lib..")
-            
-        except ObjectDoesNotExist:
-            return Response({"info":"your id not exist in the database"})
-        
-        except ValueError as e:
-            return Response({"info":str(e)})
-        
-        serialzer = CustomerMiniSerializer(customer, data = request.data, partial = True)
-        
-        if serialzer.is_valid():
-            updated_customer = serialzer.save()
-            return Response({"info":"works. changes saved.","name":updated_customer.name,"age":updated_customer.age,"id":updated_customer.customer_id,"lib":str(updated_customer.lib)} )
-
-        return Response({"info":"error!","error":serialzer.errors},status=400)
 
     #deleting the customer if he dont have any rents
     if request.method == "DELETE":
@@ -118,18 +96,20 @@ def serve_customer(request):
         try:
             customer = Customer.objects.get(customer_id = id_)
             #validate that the lib of the customer is the lib of the worker:
-            if User.objects.get(customer= id_).customer.lib.id != request.user.customer.lib.id:
+            if User.objects.get(customer= id_).customer.lib.id != request.user.worker.lib.id:
                raise ValueError(f"You not allowed to delete customer from another lib..")
                 
         except ObjectDoesNotExist:
-            return Response({"info":"your customer id not exist in the database"})
+            print("\n\n\n\n\n")
+            print(request.query_params)
+            return Response({f"info":"your customer id not exist in the database"},400)
         except ValueError as e:
-            return Response({"info":str(e)})
+            return Response({"info":str(e)},400)
         
         try:
             customer.delete()
         except RestrictedError:
-            return Response({"info":"The Customer In Rent And Cant Be Deleted."})
+            return Response({"info":"The Customer In Rent And Cant Be Deleted."},400)
         return Response({"info":"User Deleted Successfully"})
 
 
@@ -275,14 +255,14 @@ def serve_rent(request):
 
         #check for query 'cust_id'
         if not cust_id:
-            rents = Rent.objects.filter(lib = request.user.customer.lib.id)
+            rents = Rent.objects.filter(lib = request.user.worker.lib.id)
             serialzer = RentSerializer(instance=rents ,many = True)
 
         else:
             #validate that there is rent associated with a customer 
-            rent = Rent.objects.filter(cust= cust_id , lib = request.user.customer.lib.id)
+            rent = Rent.objects.filter(cust= cust_id , lib = request.user.worker.lib.id)
             if not rent:
-                return Response({"info":"no rents to this customer"})
+                return Response()
             
             serialzer = RentSerializer(instance=rent , many = True)
 
@@ -345,7 +325,7 @@ def serve_rent(request):
         #validating that the rent exist & in the lib of the worker
         try:
             rent = Rent.objects.get(id = id_)
-            if rent.lib.id != request.user.customer.lib.id:
+            if rent.lib.id != request.user.worker.lib.id:
                 raise ValueError(f"you cant delete rents of another lib.. The Rent Lib:{rent.lib.id}  Your Lib:{request.user.customer.lib.id}")
         except ObjectDoesNotExist:
             return Response({"info":"your id of the rent not exist in the database"})

@@ -43,7 +43,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-CORS_ALLOWED_ORIGINS = []
+CORS_ALLOWED_ORIGINS = ["http://localhost:3000"]
 
 ROOT_URLCONF = 'lib.urls'
 
@@ -122,3 +122,10 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 #to configure media directory
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+CACHES = {
+    "default":{
+        "BACKEND":"django.core.cache.backends.filebased.FileBasedCache",
+        "LOCATION":f"{BASE_DIR}/django_cache",
+    }
+}

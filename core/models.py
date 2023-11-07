@@ -11,10 +11,10 @@ class Library(models.Model):
         return f"{self.name} , {self.id}"
 
 class Customer(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='customer')
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='customer',blank=True)
     lib = models.ForeignKey(Library , on_delete = models.CASCADE)
     name = models.CharField(max_length=40)
-    age = models.IntegerField()
+    birth_date = models.DateField(null=True, blank=True)   
     phone = models.IntegerField(blank= True , null= True)
     customer_id = models.CharField(primary_key=True, max_length=9) #its on purpose char field and not integar..
     
@@ -28,7 +28,7 @@ class Worker(models.Model):
     phone = models.IntegerField()
     
     def __str__(self):
-        return f"{self.name} , {self.customer_id}"
+        return f"{self.name}"
 
 class Manager(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='manager')
@@ -39,16 +39,12 @@ class Manager(models.Model):
     def __str__(self):
         return f"{self.name}"
 
-class Img(models.Model):
-    name = models.CharField(max_length=100)
-    image = models.ImageField(upload_to="images/")
 
 class Book(models.Model):
     lib = models.ForeignKey(Library , on_delete = models.CASCADE )
     name = models.CharField(max_length=40)
     author = models.CharField(max_length=40)
-    img = models .OneToOneField(Img, on_delete=models.DO_NOTHING , null=True , blank=True)
-    #i want 3 options : (1)10 days (2)20 days (3)30 days 
+    cover_img = models.ImageField(upload_to="book_covers/" , null=True , blank= True ,default="book_covers\\jru_cover.png")
     numbers_choise = ((1,"10 days"), (2,"20 days"), (3,"30 days"))
     return_period = models.IntegerField(choices=numbers_choise, default= 2)
 

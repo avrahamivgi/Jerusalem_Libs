@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from rest_framework.exceptions import ValidationError
 
 
-from .models import Customer ,Book , Rent 
+from .models import Customer ,Book , Rent ,Library
 from .validators import validate_id
 
 #serilazers for models:
@@ -15,38 +15,49 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = "__all__"
 
+#lib
+class LibSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Library
+        fields = "__all__"
+
+
 #customer
 class CustomerSerializer(serializers.ModelSerializer):
-    customer_id = serializers.CharField(validators = [validate_id])
-    username = serializers.CharField(write_only=True)  # "write only" means that its will not be included in the response
-    user = UserSerializer(read_only=True)  # in order to prevent query call for this
+    customer_id = serializers.CharField(validators=[validate_id])
+    lib_details = LibSerializer(source="lib", read_only=True)
+    password = serializers.CharField(write_only=True)  
 
     class Meta:
         model = Customer
         fields = "__all__"
 
-    #in order to connect the customer to the user
-    #with a name and not with id - we overide the create func
-    #thank for chat gpt :)
     def create(self, validated_data):
-        username = validated_data.pop('username')  # extracting the username from the request
-        #validate that there is user
-        try:
-            user = User.objects.get(username=username)  # get the user instance
-        except User.DoesNotExist:
-            raise ValidationError("There Is Not Such A User..")
-        customer = Customer.objects.create(user=user, **validated_data)
+        print('XXXXXXXXXXXXXXXXXXXXX\n\n')
+        #password = validated_data.pop('password')  
+        # create new user instance
+        user = User(username=validated_data['customer_id'])
+        user.set_password(validated_data.pop('password') )
+        user.save()
+
+        # Link the User instance to the Customer
+        validated_data['user'] = user
+        print(user)
+
+        customer = Customer.objects.create(**validated_data)
         return customer
 
 class CustomerMiniSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Customer
-        fields = ['name','age',"lib"]
+        fields = ['name','birth_date',"lib"]
 
 #book
 class BookSerializer(serializers.ModelSerializer):
 
+    lib_details= LibSerializer(source="lib" , read_only=True)
+    
     class Meta:
         model = Book
         fields = "__all__"
@@ -62,7 +73,14 @@ class RentSerializer(serializers.ModelSerializer):
     is_late = serializers.SerializerMethodField(source="get_is_late")
     def get_is_late(self,rent_object):
         return rent_object.return_end_date < date.today()
-    
+
+    #adding additonal details about the books rented for display purpose
+    book_details = BookSerializer(source="book", read_only=True)
+
+    #and also the lib details
+    lib_details = LibSerializer(source="lib", read_only=True)
+    #when i use source - "lib" i use the exist attrbiute in my model.
+
     class Meta:
         model = Rent
         fields = "__all__"

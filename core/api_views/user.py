@@ -62,11 +62,11 @@ def serve_book(request):
 
             #validate that there is book that contain EVEN PART OF THE STRING on all LIBS
             try:
-                book = Book.objects.get(name__icontains = book_name)
+                book = Book.objects.filter(name__icontains = book_name ,lib = customer.lib)
             except ObjectDoesNotExist:
                 return Response({"info":"no such book"})
             
-            serialzer = BookSerializer(instance=book)
+            serialzer = BookSerializer(instance=book , many = True)
 
         return Response(serialzer.data)
 
@@ -82,7 +82,7 @@ def serve_rent(request):
     try:
         rents = Rent.objects.filter(cust__user=user)
         serializer = RentSerializer(instance=rents, many=True)
-    except Exception as e:             #fix this exeption to be more detailed!!
+    except Exception as e:            
         return Response({"info":e})
     return Response(serializer.data)
 
